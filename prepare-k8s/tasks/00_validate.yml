@@ -1,0 +1,27 @@
+- name: fail if required variable is undefined
+  ansible.builtin.fail: msg="set required variable"
+  when: clusterNetworking_podSubnet is undefined or
+        clusterNetworking_serviceSubnet is undefined or
+        no_proxy is undefined
+
+- name: check if LVM is installed
+  ansible.builtin.command: which vgs
+  register: lvm_check
+  changed_when: false
+  failed_when: false
+
+- name: fail if LVM is not installed
+  ansible.builtin.fail:
+    msg: "LVM is not installed. Please install lvm2 package."
+  when: lvm_check.rc != 0
+
+- name: check if volume group exists
+  ansible.builtin.command: vgs {{ VG_NAME }} --noheadings -o vg_name
+  register: vg_check
+  changed_when: false
+  failed_when: false
+
+- name: fail if volume group does not exist
+  ansible.builtin.fail:
+    msg: "Volume group '{{ VG_NAME }}' does not exist."
+  when: vg_check.rc != 0 or vg_check.stdout.strip() != VG_NAME

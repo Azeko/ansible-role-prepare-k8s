@@ -1,19 +1,10 @@
 ---
 - name: Check if required variables are set
-  include_tasks: tasks/00_check_required_variables.yml
+  include_tasks: tasks/00_validate.yml
 
-- name: Manage volumes on all nodes
-  include_tasks: tasks/01_manage_volumes_all_nodes.yml  
-  when: inventory_hostname in groups['k8s-nodes']
-
-- name: Manage volumes on control nodes
-  include_tasks: tasks/02_manage_volumes_control_nodes.yml
-  when: inventory_hostname in groups['k8s-controls']
-
-- name: Manage volume for rook on worker nodes
-  include_tasks: tasks/03_manage_volumes_rook_ceph.yml
-  when: inventory_hostname in groups['k8s-workers']
+- name: Manage volumes
+  include_tasks: tasks/01_manage_volumes.yml
 
 - name: Configuring servers for use
-  include_tasks: tasks/04_configuring_servers_for_use.yml 
+  include_tasks: tasks/02_configuring_servers_for_use.yml 
   when: inventory_hostname in groups['k8s-nodes']

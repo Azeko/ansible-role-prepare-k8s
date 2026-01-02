@@ -1,5 +1,0 @@
-- name: fail if required variable is undefined
-  ansible.builtin.fail: msg="set required variable"
-  when: clusterNetworking_podSubnet is undefined or
-        clusterNetworking_serviceSubnet is undefined or
-        no_proxy is undefined

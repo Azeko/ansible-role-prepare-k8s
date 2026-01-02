@@ -1,0 +1,32 @@
+---
+# Reusable task to create logical volume, format filesystem, and mount
+# Parameters:
+#   volume_name: Name of the logical volume (e.g., VAR_LIB_CONTAINERD)
+#   volume_size: Size of the volume (e.g., "{{ VAR_LIB_CONTAINERD_SIZE }}")
+#   mount_path: Path where volume should be mounted (e.g., /var/lib/containerd)
+#   volume_tag: Tag to apply to all tasks for this volume (e.g., containerd-lvm)
+
+- name: Create a logical volume for {{ mount_path }}
+  lvol:
+    vg: "{{ VG_NAME }}"
+    lv: "{{ volume_name }}"
+    size: "{{ volume_size }}"
+  tags:
+    - "{{ volume_tag }}"
+
+- name: mkfs.xfs {{ volume_name }}
+  filesystem:
+    fstype: xfs
+    dev: /dev/mapper/{{ VG_NAME }}-{{ volume_name }}
+  tags:
+    - "{{ volume_tag }}"
+
+- name: mount {{ mount_path }}
+  mount:
+    path: "{{ mount_path }}"
+    src: /dev/mapper/{{ VG_NAME }}-{{ volume_name }}
+    fstype: xfs
+    state: mounted
+  tags:
+    - "{{ volume_tag }}"
+

@@ -1,3 +1,48 @@
 ---
 # defaults file for ansible-role-prepare-k8s/prepare-k8s
 VG_NAME: VG00
+
+# Volume size defaults
+VAR_LIB_CONTAINERD_SIZE: 10g
+VAR_LIB_KUBELET_SIZE: 2g
+VAR_LIB_KUBELET_PODS_SIZE: 10g
+VAR_LOG_SIZE: 4g
+VAR_LIB_ETCD_SIZE: 2g
+VAR_LIB_ROOK_SIZE: 1g
+
+# OS-specific package lists
+prepare_k8s_packages_redhat:
+  - iptables-services
+  - ipset-service
+  - glibc-langpack-ru
+
+prepare_k8s_packages_debian:
+  - iptables-persistent
+  - ipset
+  - language-pack-ru-base
+
+# Common packages (work on both RHEL and Ubuntu)
+prepare_k8s_packages_common:
+  - git
+  - vim
+  - mailx
+  - tcpdump
+  - htop
+
+# OS-specific config file paths
+prepare_k8s_iptables_config_path_redhat: /etc/sysconfig/iptables
+prepare_k8s_iptables_config_path_debian: /etc/iptables/rules.v4
+
+prepare_k8s_ipset_config_path_redhat: /etc/sysconfig/ipset
+prepare_k8s_ipset_config_path_debian: /etc/ipset.conf
+
+# OS-specific service names
+prepare_k8s_iptables_service_redhat: iptables
+prepare_k8s_iptables_service_debian: netfilter-persistent
+
+prepare_k8s_ipset_service_redhat: ipset
+prepare_k8s_ipset_service_debian: ""  # ipset doesn't have a separate service on Ubuntu
+
+# Firewall packages to remove
+prepare_k8s_firewall_package_redhat: firewalld
+prepare_k8s_firewall_package_debian: ufw

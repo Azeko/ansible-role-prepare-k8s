@@ -1,0 +1,58 @@
+---
+# Volumes for all nodes
+- name: resize /var/log
+  lvol:
+    vg: "{{ VG_NAME }}"
+    lv: VAR_LOG
+    size: "{{ VAR_LOG_SIZE }}"
+    resizefs: true
+  tags:
+    - k8s-varlog-lvm
+  when: inventory_hostname in groups['k8s-nodes']
+
+- name: Create and mount volume for /var/lib/containerd
+  include_tasks: _create_and_mount_volume.yml
+  vars:
+    volume_name: VAR_LIB_CONTAINERD
+    volume_size: "{{ VAR_LIB_CONTAINERD_SIZE }}"
+    mount_path: /var/lib/containerd
+    volume_tag: containerd-lvm
+  when: inventory_hostname in groups['k8s-nodes']
+
+- name: Create and mount volume for /var/lib/kubelet
+  include_tasks: _create_and_mount_volume.yml
+  vars:
+    volume_name: VAR_LIB_KUBELET
+    volume_size: "{{ VAR_LIB_KUBELET_SIZE }}"
+    mount_path: /var/lib/kubelet
+    volume_tag: k8s-kubelet-lvm
+  when: inventory_hostname in groups['k8s-nodes']
+
+- name: Create and mount volume for /var/lib/kubelet/pods
+  include_tasks: _create_and_mount_volume.yml
+  vars:
+    volume_name: VAR_LIB_KUBELET_PODS
+    volume_size: "{{ VAR_LIB_KUBELET_PODS_SIZE }}"
+    mount_path: /var/lib/kubelet/pods
+    volume_tag: k8s-emptydir-lvm
+  when: inventory_hostname in groups['k8s-nodes']
+
+# Volumes for control nodes
+- name: Create and mount volume for /var/lib/etcd
+  include_tasks: _create_and_mount_volume.yml
+  vars:
+    volume_name: VAR_LIB_ETCD
+    volume_size: "{{ VAR_LIB_ETCD_SIZE }}"
+    mount_path: /var/lib/etcd
+    volume_tag: k8s-etcd-lvm
+  when: inventory_hostname in groups['k8s-controls']
+
+# Volumes for worker nodes
+- name: Create and mount volume for /var/lib/rook
+  include_tasks: _create_and_mount_volume.yml
+  vars:
+    volume_name: VAR_LIB_ROOK
+    volume_size: "{{ VAR_LIB_ROOK_SIZE }}"
+    mount_path: /var/lib/rook
+    volume_tag: k8s-rook-lvm
+  when: inventory_hostname in groups['k8s-workers']
