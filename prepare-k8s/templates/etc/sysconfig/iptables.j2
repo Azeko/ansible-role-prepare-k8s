@@ -1,0 +1,27 @@
+*filter
+:INPUT REJECT [0:0]
+:FORWARD REJECT [0:0]
+:OUTPUT ACCEPT [0:0]
+
+-A INPUT -i lo                                                                -j ACCEPT
+-A INPUT -m conntrack --ctstate ESTABLISHED,RELATED                           -j ACCEPT
+-A INPUT -p icmp                                                              -j ACCEPT
+-A INPUT -i eth0 -m set --match-set k8s-controls dst -p tcp --dport 6443      -j ACCEPT -m comment --comment "k8s api server"
+-A INPUT -i eth0 -m set --match-set k8s-controls dst -p tcp --dport 2379:2380 -j ACCEPT -m comment --comment "etcd"
+-A INPUT -i eth0 -m set --match-set k8s-controls dst -p tcp --dport 10259     -j ACCEPT -m comment --comment "kube-scheduler"
+-A INPUT -i eth0 -m set --match-set k8s-controls dst -p tcp --dport 10257     -j ACCEPT -m comment --comment "kube-controller-manager"
+-A INPUT -i eth0 -m set --match-set k8s-nodes   dst -p tcp --dport 10250     -j ACCEPT -m comment --comment "kubelet.service"
+-A INPUT -i eth0 -m set --match-set k8s-nodes   dst -p tcp --dport 179       -j ACCEPT -m comment --comment "calico BGP (https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements)"
+-A INPUT -i eth0 -m set --match-set k8s-nodes   dst -p udp --dport 4789      -j ACCEPT -m comment --comment "calico VXLAN"
+-A INPUT -i eth0 -m set --match-set k8s-nodes   dst -p tcp --dport 5473      -j ACCEPT -m comment --comment "calico Typha"
+-A INPUT -i eth0 -m set --match-set k8s-nodes   src -p 4                     -j ACCEPT -m comment --comment "allow IPv4 IPIP encapsulated packets from other k8s nodes"
+-A INPUT -i eth0 -m set --match-set k8s-nodes   dst -p tcp --dport 22        -j ACCEPT
+-A INPUT -i eth0 -m set --match-set k8s-nodes   dst -p tcp --dport 10050     -j ACCEPT -m comment --comment "zabbix-agent"
+-A INPUT                                                                      -j LOG -m limit --limit 10/m --log-level 4 --log-uid --log-prefix "INPUT DROP: "
+
+-A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED                         -j ACCEPT
+-A FORWARD -m set --match-set k8s_pod_subnet dst                              -j ACCEPT
+-A FORWARD -m set --match-set k8s_service_subnet dst                          -j ACCEPT
+-A FORWARD                                                                    -j LOG -m limit --limit 10/m --log-level 4 --log-uid --log-prefix "FORWARD DROP: "
+
+COMMIT

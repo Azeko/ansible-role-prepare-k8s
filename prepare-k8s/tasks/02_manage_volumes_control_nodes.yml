@@ -1,0 +1,25 @@
+  - name: Create a logical volume for /var/lib/etcd
+    lvol:
+      vg: "{{ VG_NAME }}"
+      lv: VAR_LIB_ETCD
+      size: "{{ VAR_LIB_ETCD_SIZE | default('2g') }}"
+    tags: 
+      - k8s-etcd-lvm
+
+  - name: mkfs.xfs VAR_LIB_ETCD
+    filesystem:
+      fstype: xfs
+      dev: /dev/mapper/{{ VG_NAME }}-VAR_LIB_ETCD
+    tags: 
+      - k8s-etcd-lvm
+
+  - name: mount /var/lib/etcd
+    mount:
+      path: /var/lib/etcd
+      src: /dev/mapper/{{ VG_NAME }}-VAR_LIB_ETCD
+      fstype: xfs
+      state: mounted
+    tags: 
+      - k8s-etcd-lvm
+
+

@@ -1,0 +1,5 @@
+---
+- hosts: localhost
+  remote_user: root
+  roles:
+    - ansible-role-prepare-k8s/prepare-k8s

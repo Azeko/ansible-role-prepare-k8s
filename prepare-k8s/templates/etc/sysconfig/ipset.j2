@@ -1,0 +1,25 @@
+create k8s-controls hash:ip family inet hashsize 1024 maxelem 65536
+
+{% for host in groups['k8s-controls'] -%}
+add k8s-controls {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+{% endfor %}
+
+create k8s-workers hash:ip family inet hashsize 1024 maxelem 65536
+
+{% for host in groups['k8s-workers'] -%}
+add k8s-workers {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+{% endfor %}
+
+create k8s-nodes hash:ip family inet hashsize 1024 maxelem 65536
+
+{% for host in groups['k8s-nodes'] -%}
+add k8s-nodes {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+{% endfor %}
+
+create k8s_pod_subnet hash:net family inet
+
+add k8s_pod_subnet {{ clusterNetworking_podSubnet }}
+
+create k8s_service_subnet hash:net family inet
+
+add k8s_service_subnet {{ clusterNetworking_serviceSubnet }}

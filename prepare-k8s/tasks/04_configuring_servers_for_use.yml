@@ -1,0 +1,125 @@
+- name: include roles
+  include_role:
+    name: "{{ item }}"
+  loop:
+    - common
+    - chronyd
+    - logrotate
+
+- name: include auth role
+  include_role:
+    name: auth
+    apply:
+      tags:
+        - 'auth'
+  vars:
+    auth__sudo_admins: ['%grsadm', '%wwwadm']
+
+- name: include postfix role
+  include_role:
+    name: postfix
+
+- name: include zabbix-agent role
+  include_role:
+    name: zabbix-agent
+    apply:
+      tags:
+        - 'zabbix-agent'
+  vars:
+    zabbixagent_base: True
+    zabbixagent_ntp: True 
+
+- name: include nagios role
+  include_role:
+    name: nagios
+    apply:
+      tags:
+        - 'nagios'
+ 
+- name: Add or modify both soft and hard nofile limits for wildcard domain
+  pam_limits:
+    domain: '*'
+    limit_type: "-"
+    limit_item: nofile
+    value: 65536
+
+# temporarily disable this task because it fails because of a bug https://github.com/kubernetes-sigs/kubespray/issues/10517
+#- name: Put SELinux in permissive mode, logging actions that would be blocked.
+#  selinux:
+#    policy: targeted
+#    state: permissive
+
+- name: remove firewalld
+  yum:
+    name: "firewalld"
+    state: absent
+
+- name: install required packages
+  yum:
+    name:
+      - iptables-services
+      - ipset-service
+      - git
+      - vim
+      - mailx
+      - tcpdump
+      - htop
+      - glibc-langpack-ru
+    state: present
+
+- name: add custom sysctl
+  template:
+    src: "etc/sysctl.d/99-sysctl.conf.j2"
+    dest: /etc/sysctl.d/99-sysctl.conf
+    owner: root
+    group: root
+    force: yes
+  tags: configure_servers
+
+- name: apply sysctl
+  shell: "/usr/sbin/sysctl --system >/dev/null"
+
+- name: enable iptables
+  systemd:
+    name: "iptables"
+    enabled: yes
+  tags: configure_servers
+
+- name: enable ipset
+  systemd:
+    name: "ipset"
+    enabled: yes
+  tags: configure_servers
+
+- name: upload iptables config
+  template:
+    src: "etc/sysconfig/iptables.j2"
+    dest: /etc/sysconfig/iptables
+    owner: root
+    group: root
+    force: yes
+
+- name: upload ipset config
+  template:
+    src: "etc/sysconfig/ipset.j2"
+    dest: /etc/sysconfig/ipset
+    owner: root
+    group: root
+    force: yes
+
+- name: Restore and save ipset and iptables
+  shell: |
+    ipset restore -! < /etc/sysconfig/ipset
+    iptables-restore < /etc/sysconfig/iptables
+    ipset save
+    iptables-save
+
+- name: set no_proxy in /etc/environment
+  lineinfile:
+    path: /etc/environment
+    regexp: "^{{ item }}"
+    line: "{{ item }}={{ no_proxy }}"
+    create: yes
+  with_items:
+    - "no_proxy"
+    - "NO_PROXY"
